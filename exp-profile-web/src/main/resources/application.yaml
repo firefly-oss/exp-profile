@@ -1,0 +1,79 @@
+spring:
+  application:
+    name: exp-profile
+    version: 1.0.0
+    description: Experience layer API for customer profile management
+    team:
+      name: Firefly Software Solutions Inc
+      email: dev@getfirefly.io
+  threads:
+    virtual:
+      enabled: true
+
+server:
+  port: ${SERVER_PORT:8103}
+  shutdown: graceful
+
+api-configuration:
+  domain-platform:
+    customer-people:
+      base-path: ${CUSTOMER_PEOPLE_URL:http://localhost:8081}
+    common-contracts:
+      base-path: ${CONTRACTS_URL:http://localhost:8090}
+
+springdoc:
+  packages-to-scan: com.firefly.experience.profile.web.controllers
+  paths-to-match: /api/**
+  swagger-ui:
+    path: /swagger-ui.html
+    tagsSorter: alpha
+    operationsSorter: method
+    docExpansion: none
+    filter: true
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
+
+logging:
+  level:
+    root: INFO
+    com.firefly.experience.profile: DEBUG
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+logging:
+  level:
+    com.firefly: DEBUG
+
+---
+spring:
+  config:
+    activate:
+      on-profile: pro
+logging:
+  level:
+    com.firefly: INFO
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
