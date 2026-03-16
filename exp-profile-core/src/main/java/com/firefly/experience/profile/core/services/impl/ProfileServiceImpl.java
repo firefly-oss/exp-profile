@@ -74,7 +74,7 @@ public class ProfileServiceImpl implements ProfileService {
 
         // TODO: Aggregate addresses and identity documents in parallel once
         //       domain-customer-people-sdk exposes query endpoints for those resources.
-        return customersApi.getCustomerInfo(partyId)
+        return customersApi.getCustomerInfo(partyId, UUID.randomUUID().toString())
                 .map(person -> ProfileDTO.builder()
                         .partyId(partyId)
                         .firstName(person.getGivenName())
@@ -102,9 +102,7 @@ public class ProfileServiceImpl implements ProfileService {
         if (command.getDateOfBirth() != null) {
             sdkCommand.setDateOfBirth(command.getDateOfBirth());
         }
-        // ARCH-EXCEPTION: domain-customer-people-sdk generated client does not expose an
-        // xIdempotencyKey parameter on updateCustomer; idempotency cannot be set at call-site.
-        return customersApi.updateCustomer(sdkCommand).then();
+        return customersApi.updateCustomer(sdkCommand, UUID.randomUUID().toString()).then();
     }
 
     @Override
@@ -119,9 +117,7 @@ public class ProfileServiceImpl implements ProfileService {
             emailCmd.setPartyId(partyId);
             emailCmd.setEmail(command.getEmail());
             emailCmd.setIsPrimary(true);
-            // ARCH-EXCEPTION: domain-customer-people-sdk generated client does not expose an
-            // xIdempotencyKey parameter on addCustomerEmail; idempotency cannot be set at call-site.
-            emailUpdate = customersApi.addCustomerEmail(partyId, emailCmd).then();
+            emailUpdate = customersApi.addCustomerEmail(partyId, emailCmd, UUID.randomUUID().toString()).then();
         }
 
         if (command.getPhone() != null) {
@@ -129,9 +125,7 @@ public class ProfileServiceImpl implements ProfileService {
             phoneCmd.setPartyId(partyId);
             phoneCmd.setPhoneNumber(command.getPhone());
             phoneCmd.setIsPrimary(true);
-            // ARCH-EXCEPTION: domain-customer-people-sdk generated client does not expose an
-            // xIdempotencyKey parameter on addCustomerPhone; idempotency cannot be set at call-site.
-            phoneUpdate = customersApi.addCustomerPhone(partyId, phoneCmd).then();
+            phoneUpdate = customersApi.addCustomerPhone(partyId, phoneCmd, UUID.randomUUID().toString()).then();
         }
 
         return Mono.when(emailUpdate, phoneUpdate);
@@ -158,9 +152,7 @@ public class ProfileServiceImpl implements ProfileService {
         sdkCommand.setPostalCode(command.getPostalCode());
         sdkCommand.setAddressKind(toAddressKind(command.getType()));
 
-        // ARCH-EXCEPTION: domain-customer-people-sdk generated client does not expose an
-        // xIdempotencyKey parameter on addCustomerAddress; idempotency cannot be set at call-site.
-        return customersApi.addCustomerAddress(partyId, sdkCommand)
+        return customersApi.addCustomerAddress(partyId, sdkCommand, UUID.randomUUID().toString())
                 .thenReturn(AddressDTO.builder()
                         .addressId(UUID.randomUUID())
                         .type(command.getType())
@@ -189,9 +181,7 @@ public class ProfileServiceImpl implements ProfileService {
             sdkCommand.setPostalCode(command.getPostalCode());
         }
 
-        // ARCH-EXCEPTION: domain-customer-people-sdk generated client does not expose an
-        // xIdempotencyKey parameter on updateCustomerAddress; idempotency cannot be set at call-site.
-        return customersApi.updateCustomerAddress(partyId, addressId, sdkCommand)
+        return customersApi.updateCustomerAddress(partyId, addressId, sdkCommand, UUID.randomUUID().toString())
                 .thenReturn(AddressDTO.builder()
                         .addressId(addressId)
                         .street(command.getStreet())
@@ -204,7 +194,7 @@ public class ProfileServiceImpl implements ProfileService {
     @Override
     public Mono<Void> deleteAddress(UUID partyId, UUID addressId) {
         log.debug("Deleting addressId={} for partyId={}", addressId, partyId);
-        return customersApi.removeCustomerAddress(partyId, addressId).then();
+        return customersApi.removeCustomerAddress(partyId, addressId, UUID.randomUUID().toString()).then();
     }
 
     // ── Documents ─────────────────────────────────────────────────────────────
@@ -279,9 +269,7 @@ public class ProfileServiceImpl implements ProfileService {
         // /api/v1/customers/{partyId}/id-documents; no separate addIdentityDocument() method
         // exists in the generated SDK despite the misleading name. The underlying HTTP route
         // is correct for identity document registration.
-        // ARCH-EXCEPTION: domain-customer-people-sdk generated client does not expose an
-        // xIdempotencyKey parameter on addTaxId; idempotency cannot be set at call-site.
-        return customersApi.addTaxId(partyId, sdkCommand)
+        return customersApi.addTaxId(partyId, sdkCommand, UUID.randomUUID().toString())
                 .thenReturn(IdentityDocumentDTO.builder()
                         .documentId(UUID.randomUUID())
                         .type(command.getType())
@@ -294,7 +282,7 @@ public class ProfileServiceImpl implements ProfileService {
     @Override
     public Mono<Void> deleteIdentityDocument(UUID partyId, UUID documentId) {
         log.debug("Deleting identity documentId={} for partyId={}", documentId, partyId);
-        return customersApi.removeTaxId(partyId, documentId).then();
+        return customersApi.removeTaxId(partyId, documentId, UUID.randomUUID().toString()).then();
     }
 
     // ── Contracts ─────────────────────────────────────────────────────────────

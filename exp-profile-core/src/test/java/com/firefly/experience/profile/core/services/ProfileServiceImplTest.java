@@ -55,7 +55,7 @@ class ProfileServiceImplTest {
         sdkDto.setFamilyName1("Doe");
         sdkDto.setDateOfBirth(LocalDate.of(1990, 5, 15));
 
-        when(customersApi.getCustomerInfo(partyId)).thenReturn(Mono.just(sdkDto));
+        when(customersApi.getCustomerInfo(eq(partyId), any())).thenReturn(Mono.just(sdkDto));
 
         StepVerifier.create(service.getProfile(partyId))
                 .expectNextMatches(profile ->
@@ -72,7 +72,7 @@ class ProfileServiceImplTest {
     @Test
     void getProfile_propagatesDownstreamError() {
         UUID partyId = UUID.randomUUID();
-        when(customersApi.getCustomerInfo(partyId))
+        when(customersApi.getCustomerInfo(eq(partyId), any()))
                 .thenReturn(Mono.error(new RuntimeException("downstream unavailable")));
 
         StepVerifier.create(service.getProfile(partyId))
@@ -89,12 +89,12 @@ class ProfileServiceImplTest {
         command.setFirstName("Alice");
         command.setLastName("Smith");
 
-        when(customersApi.updateCustomer(any())).thenReturn(Mono.just(new Object()));
+        when(customersApi.updateCustomer(any(), any())).thenReturn(Mono.just(new Object()));
 
         StepVerifier.create(service.updatePersonalData(partyId, command))
                 .verifyComplete();
 
-        verify(customersApi).updateCustomer(any());
+        verify(customersApi).updateCustomer(any(), any());
     }
 
     @Test
@@ -104,7 +104,7 @@ class ProfileServiceImplTest {
         command.setFirstName("Alice");
         // lastName and dateOfBirth intentionally null — partial update
 
-        when(customersApi.updateCustomer(any())).thenReturn(Mono.just(new Object()));
+        when(customersApi.updateCustomer(any(), any())).thenReturn(Mono.just(new Object()));
 
         StepVerifier.create(service.updatePersonalData(partyId, command))
                 .verifyComplete();
@@ -119,14 +119,14 @@ class ProfileServiceImplTest {
         command.setEmail("alice@example.com");
         command.setPhone("+34600123456");
 
-        when(customersApi.addCustomerEmail(eq(partyId), any())).thenReturn(Mono.just(new Object()));
-        when(customersApi.addCustomerPhone(eq(partyId), any())).thenReturn(Mono.just(new Object()));
+        when(customersApi.addCustomerEmail(eq(partyId), any(), any())).thenReturn(Mono.just(new Object()));
+        when(customersApi.addCustomerPhone(eq(partyId), any(), any())).thenReturn(Mono.just(new Object()));
 
         StepVerifier.create(service.updateContactData(partyId, command))
                 .verifyComplete();
 
-        verify(customersApi).addCustomerEmail(eq(partyId), any());
-        verify(customersApi).addCustomerPhone(eq(partyId), any());
+        verify(customersApi).addCustomerEmail(eq(partyId), any(), any());
+        verify(customersApi).addCustomerPhone(eq(partyId), any(), any());
     }
 
     @Test
@@ -135,7 +135,7 @@ class ProfileServiceImplTest {
         UpdateContactDataCommand command = new UpdateContactDataCommand();
         command.setPhone("+34600999888");
 
-        when(customersApi.addCustomerPhone(eq(partyId), any())).thenReturn(Mono.just(new Object()));
+        when(customersApi.addCustomerPhone(eq(partyId), any(), any())).thenReturn(Mono.just(new Object()));
 
         StepVerifier.create(service.updateContactData(partyId, command))
                 .verifyComplete();
@@ -153,7 +153,7 @@ class ProfileServiceImplTest {
         command.setPostalCode("28013");
         command.setCountry("ES");
 
-        when(customersApi.addCustomerAddress(eq(partyId), any())).thenReturn(Mono.just(new Object()));
+        when(customersApi.addCustomerAddress(eq(partyId), any(), any())).thenReturn(Mono.just(new Object()));
 
         StepVerifier.create(service.addAddress(partyId, command))
                 .expectNextMatches(dto ->
@@ -177,7 +177,7 @@ class ProfileServiceImplTest {
         command.setCity("Barcelona");
         command.setPostalCode("08001");
 
-        when(customersApi.updateCustomerAddress(eq(partyId), eq(addressId), any()))
+        when(customersApi.updateCustomerAddress(eq(partyId), eq(addressId), any(), any()))
                 .thenReturn(Mono.just(new Object()));
 
         StepVerifier.create(service.updateAddress(partyId, addressId, command))
@@ -196,12 +196,12 @@ class ProfileServiceImplTest {
         UUID partyId = UUID.randomUUID();
         UUID addressId = UUID.randomUUID();
 
-        when(customersApi.removeCustomerAddress(partyId, addressId)).thenReturn(Mono.just(new Object()));
+        when(customersApi.removeCustomerAddress(eq(partyId), eq(addressId), any())).thenReturn(Mono.just(new Object()));
 
         StepVerifier.create(service.deleteAddress(partyId, addressId))
                 .verifyComplete();
 
-        verify(customersApi).removeCustomerAddress(partyId, addressId);
+        verify(customersApi).removeCustomerAddress(eq(partyId), eq(addressId), any());
     }
 
     // ── getAddresses (stub) ────────────────────────────────────────────────────
@@ -224,7 +224,7 @@ class ProfileServiceImplTest {
         command.setNumber("XYZ123456");
         command.setExpiryDate(LocalDate.of(2030, 12, 31));
 
-        when(customersApi.addTaxId(eq(partyId), any())).thenReturn(Mono.just(new Object()));
+        when(customersApi.addTaxId(eq(partyId), any(), any())).thenReturn(Mono.just(new Object()));
 
         StepVerifier.create(service.addIdentityDocument(partyId, command))
                 .expectNextMatches(dto ->
@@ -244,12 +244,12 @@ class ProfileServiceImplTest {
         UUID partyId = UUID.randomUUID();
         UUID documentId = UUID.randomUUID();
 
-        when(customersApi.removeTaxId(partyId, documentId)).thenReturn(Mono.just(new Object()));
+        when(customersApi.removeTaxId(eq(partyId), eq(documentId), any())).thenReturn(Mono.just(new Object()));
 
         StepVerifier.create(service.deleteIdentityDocument(partyId, documentId))
                 .verifyComplete();
 
-        verify(customersApi).removeTaxId(partyId, documentId);
+        verify(customersApi).removeTaxId(eq(partyId), eq(documentId), any());
     }
 
     // ── getContracts (stub) ────────────────────────────────────────────────────
