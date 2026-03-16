@@ -2,7 +2,7 @@ package com.firefly.experience.profile.core.services;
 
 import com.firefly.domain.people.sdk.api.CustomersApi;
 import com.firefly.domain.people.sdk.model.NaturalPersonDTO;
-import com.firefly.core.contract.sdk.api.ContractsApi;
+import com.firefly.domain.common.contracts.sdk.api.ContractsApi;
 import com.firefly.experience.profile.core.commands.AddAddressCommand;
 import com.firefly.experience.profile.core.commands.AddIdentityDocumentCommand;
 import com.firefly.experience.profile.core.commands.UpdateAddressCommand;

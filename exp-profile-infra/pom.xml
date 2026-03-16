@@ -60,10 +60,7 @@
             <groupId>com.firefly</groupId>
             <artifactId>domain-common-contracts-sdk</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.firefly</groupId>
-            <artifactId>core-common-contract-mgmt-sdk</artifactId>
-        </dependency>
+
 
         <!-- Jackson -->
         <dependency>

@@ -1,6 +1,7 @@
 package com.firefly.experience.profile.infra.factories;
 
-import com.firefly.core.contract.sdk.api.ContractsApi;
+import com.firefly.domain.common.contracts.sdk.api.ContractsApi;
+import com.firefly.domain.common.contracts.sdk.invoker.ApiClient;
 import com.firefly.experience.profile.infra.properties.ContractsProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -11,15 +12,11 @@ import org.springframework.stereotype.Component;
  * <p>
  * Provides:
  * <ul>
- *   <li>{@link ContractsApi} — from {@code core-common-contract-mgmt-sdk},
+ *   <li>{@link ContractsApi} — from {@code domain-common-contracts-sdk},
  *       for reading contract summaries by party</li>
  * </ul>
  * Base path is configured via
  * {@code api-configuration.domain-platform.common-contracts.base-path}.
- *
- * <p>ARCH-EXCEPTION: Uses {@code core-common-contract-mgmt-sdk} (core tier) directly because
- * {@code domain-common-contracts-sdk} only exposes SCA challenge/verify operations via
- * {@code ScaOperationsApi}; no domain SDK exists for loan contract CRUD endpoints.
  */
 @Component
 @RequiredArgsConstructor
@@ -27,9 +24,8 @@ public class ContractsClientFactory {
 
     private final ContractsProperties properties;
 
-    private com.firefly.core.contract.sdk.invoker.ApiClient buildCoreApiClient() {
-        com.firefly.core.contract.sdk.invoker.ApiClient client =
-                new com.firefly.core.contract.sdk.invoker.ApiClient();
+    private ApiClient buildApiClient() {
+        ApiClient client = new ApiClient();
         client.setBasePath(properties.getBasePath());
         return client;
     }
@@ -42,6 +38,6 @@ public class ContractsClientFactory {
      */
     @Bean
     public ContractsApi contractsApi() {
-        return new ContractsApi(buildCoreApiClient());
+        return new ContractsApi(buildApiClient());
     }
 }

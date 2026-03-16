@@ -17,7 +17,7 @@ import java.util.UUID;
  * <ul>
  *   <li>{@code domain-customer-people-sdk} — personal data, contact data, addresses,
  *       identity documents, and consents</li>
- *   <li>{@code core-common-contract-mgmt-sdk} — contract summaries</li>
+ *   <li>{@code domain-common-contracts-sdk} — contract summaries</li>
  * </ul>
  */
 public interface ProfileService {

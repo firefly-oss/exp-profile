@@ -6,7 +6,7 @@ import com.firefly.domain.people.sdk.model.RegisterEmailCommand;
 import com.firefly.domain.people.sdk.model.RegisterIdentityDocumentCommand;
 import com.firefly.domain.people.sdk.model.RegisterPhoneCommand;
 import com.firefly.domain.people.sdk.model.UpdateCustomerCommand;
-import com.firefly.core.contract.sdk.api.ContractsApi;
+import com.firefly.domain.common.contracts.sdk.api.ContractsApi;
 import com.firefly.experience.profile.core.commands.AddAddressCommand;
 import com.firefly.experience.profile.core.commands.AddIdentityDocumentCommand;
 import com.firefly.experience.profile.core.commands.UpdateAddressCommand;
@@ -47,16 +47,14 @@ import java.util.UUID;
  *   <li>Manage identity documents via {@code CustomersApi.addTaxId()},
  *       {@code removeTaxId()}</li>
  * </ul>
- * Capabilities backed by {@code core-common-contract-mgmt-sdk}:
+ * Capabilities backed by {@code domain-common-contracts-sdk}:
  * <ul>
- *   <li>Contract summaries via {@code ContractsApi.filterContracts()}</li>
+ *   <li>Contract summaries via {@code ContractsApi.listByParty()}</li>
  * </ul>
  * <p>
  * Methods marked with {@code // TODO} require additional SDK query support
  * not yet available in the current domain service SDK.
  *
- * <p>ARCH-EXCEPTION: {@code core.contract.sdk} is used directly because
- * {@code domain-common-contracts-sdk} only exposes SCA operations; no domain contract CRUD API exists.
  */
 @Slf4j
 @Service
@@ -74,7 +72,7 @@ public class ProfileServiceImpl implements ProfileService {
 
         // TODO: Aggregate addresses and identity documents in parallel once
         //       domain-customer-people-sdk exposes query endpoints for those resources.
-        return customersApi.getCustomerInfo(partyId, UUID.randomUUID().toString())
+        return customersApi.getCustomerInfo(partyId, null)
                 .map(person -> ProfileDTO.builder()
                         .partyId(partyId)
                         .firstName(person.getGivenName())
@@ -265,10 +263,6 @@ public class ProfileServiceImpl implements ProfileService {
             sdkCommand.setExpiryDate(command.getExpiryDate().atStartOfDay());
         }
 
-        // ARCH-EXCEPTION: CustomersApi.addTaxId() is the only available method that posts to
-        // /api/v1/customers/{partyId}/id-documents; no separate addIdentityDocument() method
-        // exists in the generated SDK despite the misleading name. The underlying HTTP route
-        // is correct for identity document registration.
         return customersApi.addTaxId(partyId, sdkCommand, UUID.randomUUID().toString())
                 .thenReturn(IdentityDocumentDTO.builder()
                         .documentId(UUID.randomUUID())
@@ -290,12 +284,9 @@ public class ProfileServiceImpl implements ProfileService {
     @Override
     public Flux<ContractSummaryDTO> getContracts(UUID partyId) {
         log.debug("Fetching contracts for partyId={}", partyId);
-        // TODO: The core-common-contract-mgmt-sdk does not expose a direct
-        //       "get contracts by partyId" endpoint. A party-scoped contract
-        //       lookup requires using ContractPartiesApi to find contractIds
-        //       associated with the party, then enriching each with ContractsApi.getContractById().
-        //       Implement when that query pattern is available or when domain-common-contracts-sdk
-        //       exposes a party-scoped contracts endpoint.
+        // TODO: domain-common-contracts-sdk exposes listByParty(partyId, traceId)
+        //       which returns Mono<Object>. Implement mapping from the raw response
+        //       to ContractSummaryDTO once the response schema is finalised.
         return Flux.empty();
     }
 
