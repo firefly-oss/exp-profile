@@ -18,11 +18,12 @@ import org.springframework.web.reactive.config.EnableWebFlux;
 @SpringBootApplication(
         scanBasePackages = {
                 "com.firefly.experience.profile",
-                "org.fireflyframework.web"
+                "org.fireflyframework.web",
+                "org.fireflyframework.common.application"
         }
 )
 @EnableWebFlux
-@ConfigurationPropertiesScan
+@ConfigurationPropertiesScan(basePackages = "com.firefly.experience.profile")
 @OpenAPIDefinition(
         info = @Info(
                 title = "${spring.application.name}",
