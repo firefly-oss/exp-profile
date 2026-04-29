@@ -1,0 +1,622 @@
+openapi: 3.0.1
+info:
+  title: OpenAPI definition
+  version: v0
+servers:
+- url: http://localhost:18080
+  description: Generated server url
+tags:
+- name: Profile
+  description: User profile self-service
+paths:
+  /api/v1/experience/profile/consents/{id}:
+    put:
+      tags:
+      - Profile
+      summary: Update consent
+      description: Updates the status (ACCEPTED / REVOKED) of a specific consent.
+      operationId: updateConsent
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateConsentCommand"
+        required: true
+      responses:
+        "200":
+          description: OK
+  /api/v1/experience/profile/addresses/{id}:
+    put:
+      tags:
+      - Profile
+      summary: Update address
+      description: Updates an existing address for the authenticated party. Only provided
+        fields are applied.
+      operationId: updateAddress
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAddressCommand"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AddressDTO"
+    delete:
+      tags:
+      - Profile
+      summary: Delete address
+      description: Removes an address from the authenticated party's profile.
+      operationId: deleteAddress
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+  /api/v1/experience/profile/identity-documents:
+    get:
+      tags:
+      - Profile
+      summary: List identity documents
+      description: Returns all identity documents associated with the authenticated
+        party.
+      operationId: getIdentityDocuments
+      parameters:
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/IdentityDocumentDTO"
+    post:
+      tags:
+      - Profile
+      summary: Add identity document
+      description: "Registers a new identity document (passport, national ID, etc.)\
+        \ for the authenticated party."
+      operationId: addIdentityDocument
+      parameters:
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddIdentityDocumentCommand"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentityDocumentDTO"
+  /api/v1/experience/profile/documents:
+    get:
+      tags:
+      - Profile
+      summary: List documents
+      description: Returns metadata for all documents uploaded by the authenticated
+        party.
+      operationId: getDocuments
+      parameters:
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DocumentDTO"
+    post:
+      tags:
+      - Profile
+      summary: Upload document
+      description: Uploads a document and returns its metadata.
+      operationId: uploadDocument
+      parameters:
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadDocumentCommand"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentDTO"
+  /api/v1/experience/profile/addresses:
+    get:
+      tags:
+      - Profile
+      summary: List addresses
+      description: Returns all addresses associated with the authenticated party.
+      operationId: getAddresses
+      parameters:
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AddressDTO"
+    post:
+      tags:
+      - Profile
+      summary: Add address
+      description: Adds a new address to the authenticated party's profile.
+      operationId: addAddress
+      parameters:
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddAddressCommand"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AddressDTO"
+  /api/v1/experience/profile/personal-data:
+    patch:
+      tags:
+      - Profile
+      summary: Update personal data
+      description: "Partially updates the personal data (name, date of birth) of the\
+        \ authenticated party. Only provided fields are applied."
+      operationId: updatePersonalData
+      parameters:
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePersonalDataCommand"
+        required: true
+      responses:
+        "200":
+          description: OK
+  /api/v1/experience/profile/contact-data:
+    patch:
+      tags:
+      - Profile
+      summary: Update contact data
+      description: "Partially updates the contact data (email, phone) of the authenticated\
+        \ party. Only provided fields are applied."
+      operationId: updateContactData
+      parameters:
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateContactDataCommand"
+        required: true
+      responses:
+        "200":
+          description: OK
+  /api/v1/experience/profile/documents/{id}:
+    get:
+      tags:
+      - Profile
+      summary: Download document
+      description: Downloads the raw content of the specified document.
+      operationId: downloadDocument
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: byte
+  /api/v1/experience/profile/contracts:
+    get:
+      tags:
+      - Profile
+      summary: List contracts
+      description: Returns active contract summaries associated with the authenticated
+        party.
+      operationId: getContracts
+      parameters:
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ContractSummaryDTO"
+  /api/v1/experience/profile/consents:
+    get:
+      tags:
+      - Profile
+      summary: List consents
+      description: Returns all consents registered for the authenticated party.
+      operationId: getConsents
+      parameters:
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ConsentDTO"
+  /api/v1/experience/profile:
+    get:
+      tags:
+      - Profile
+      summary: Get profile
+      description: "Returns the aggregated profile for the authenticated party, including\
+        \ personal data, addresses, and identity documents."
+      operationId: getProfile
+      parameters:
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileDTO"
+  /api/v1/experience/profile/identity-documents/{id}:
+    delete:
+      tags:
+      - Profile
+      summary: Delete identity document
+      description: Removes an identity document from the authenticated party's profile.
+      operationId: deleteIdentityDocument
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+components:
+  schemas:
+    UpdateConsentCommand:
+      required:
+      - status
+      type: object
+      properties:
+        status:
+          minLength: 1
+          type: string
+    UpdateAddressCommand:
+      type: object
+      properties:
+        street:
+          type: string
+        city:
+          type: string
+        postalCode:
+          type: string
+        country:
+          type: string
+    AddressDTO:
+      type: object
+      properties:
+        addressId:
+          type: string
+          format: uuid
+        type:
+          type: string
+        street:
+          type: string
+        city:
+          type: string
+        postalCode:
+          type: string
+        country:
+          type: string
+    AddIdentityDocumentCommand:
+      required:
+      - expiryDate
+      - number
+      - type
+      type: object
+      properties:
+        type:
+          minLength: 1
+          type: string
+        number:
+          minLength: 1
+          type: string
+        expiryDate:
+          type: string
+          format: date
+    IdentityDocumentDTO:
+      type: object
+      properties:
+        documentId:
+          type: string
+          format: uuid
+        type:
+          type: string
+        number:
+          type: string
+        expiryDate:
+          type: string
+          format: date
+        verified:
+          type: boolean
+    UploadDocumentCommand:
+      required:
+      - content
+      - name
+      - type
+      type: object
+      properties:
+        name:
+          minLength: 1
+          type: string
+        type:
+          minLength: 1
+          type: string
+        content:
+          type: string
+          format: byte
+    DocumentDTO:
+      type: object
+      properties:
+        documentId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+        uploadedAt:
+          type: string
+          format: date-time
+        size:
+          type: integer
+          format: int64
+    AddAddressCommand:
+      required:
+      - city
+      - country
+      - postalCode
+      - street
+      - type
+      type: object
+      properties:
+        type:
+          minLength: 1
+          type: string
+        street:
+          minLength: 1
+          type: string
+        city:
+          minLength: 1
+          type: string
+        postalCode:
+          minLength: 1
+          type: string
+        country:
+          minLength: 1
+          type: string
+    UpdatePersonalDataCommand:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+    UpdateContactDataCommand:
+      type: object
+      properties:
+        email:
+          type: string
+        phone:
+          type: string
+    ContractSummaryDTO:
+      type: object
+      properties:
+        contractId:
+          type: string
+          format: uuid
+        type:
+          type: string
+        status:
+          type: string
+        signedAt:
+          type: string
+          format: date-time
+    ConsentDTO:
+      type: object
+      properties:
+        consentId:
+          type: string
+          format: uuid
+        type:
+          type: string
+        status:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+    ProfileDTO:
+      type: object
+      properties:
+        partyId:
+          type: string
+          format: uuid
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        addresses:
+          type: array
+          items:
+            $ref: "#/components/schemas/AddressDTO"
+        identityDocuments:
+          type: array
+          items:
+            $ref: "#/components/schemas/IdentityDocumentDTO"
