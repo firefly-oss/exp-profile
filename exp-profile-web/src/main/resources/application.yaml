@@ -17,9 +17,9 @@ server:
 api-configuration:
   domain-platform:
     customer-people:
-      base-path: ${CUSTOMER_PEOPLE_URL:http://localhost:8081}
+      base-path: ${ENDPOINT_DOMAIN_CUSTOMER_PEOPLE:http://localhost:8081}
     common-contracts:
-      base-path: ${CONTRACTS_URL:http://localhost:8090}
+      base-path: ${ENDPOINT_DOMAIN_COMMON_CONTRACTS:http://localhost:8090}
 
 springdoc:
   packages-to-scan: com.firefly.experience.profile.web.controllers
