@@ -1,22 +1,26 @@
 package com.firefly.experience.profile.core.services;
 
+import com.firefly.domain.common.contracts.sdk.api.ContractsApi;
 import com.firefly.domain.people.sdk.api.CustomersApi;
 import com.firefly.domain.people.sdk.model.NaturalPersonDTO;
-import com.firefly.domain.common.contracts.sdk.api.ContractsApi;
 import com.firefly.experience.profile.core.commands.AddAddressCommand;
 import com.firefly.experience.profile.core.commands.AddIdentityDocumentCommand;
 import com.firefly.experience.profile.core.commands.UpdateAddressCommand;
+import com.firefly.experience.profile.core.commands.UpdateConsentCommand;
 import com.firefly.experience.profile.core.commands.UpdateContactDataCommand;
 import com.firefly.experience.profile.core.commands.UpdatePersonalDataCommand;
 import com.firefly.experience.profile.core.queries.AddressDTO;
 import com.firefly.experience.profile.core.queries.IdentityDocumentDTO;
 import com.firefly.experience.profile.core.queries.ProfileDTO;
 import com.firefly.experience.profile.core.services.impl.ProfileServiceImpl;
+import org.fireflyframework.web.error.exceptions.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -260,5 +264,159 @@ class ProfileServiceImplTest {
 
         StepVerifier.create(service.getContracts(partyId))
                 .verifyComplete();
+    }
+
+    // ── updateConsent ──────────────────────────────────────────────────────────
+
+    @Test
+    void updateConsent_grantedStatus_mapsToGrantedTrueAndDispatchesToCustomersApi() {
+        UUID partyId = UUID.randomUUID();
+        UUID consentId = UUID.randomUUID();
+        UUID applicationId = UUID.randomUUID();
+
+        UpdateConsentCommand command = UpdateConsentCommand.builder()
+                .status("GRANTED")
+                .applicationId(applicationId)
+                .build();
+
+        when(customersApi.updateCustomerConsent(eq(partyId), eq(consentId),
+                any(com.firefly.domain.people.sdk.model.UpdateConsentCommand.class), any()))
+                .thenReturn(Mono.just(new Object()));
+
+        StepVerifier.create(service.updateConsent(partyId, consentId, command))
+                .verifyComplete();
+
+        ArgumentCaptor<com.firefly.domain.people.sdk.model.UpdateConsentCommand> dtoCaptor =
+                ArgumentCaptor.forClass(com.firefly.domain.people.sdk.model.UpdateConsentCommand.class);
+        ArgumentCaptor<String> idemKeyCaptor = ArgumentCaptor.forClass(String.class);
+        verify(customersApi).updateCustomerConsent(eq(partyId), eq(consentId),
+                dtoCaptor.capture(), idemKeyCaptor.capture());
+
+        com.firefly.domain.people.sdk.model.UpdateConsentCommand dispatched = dtoCaptor.getValue();
+        assertThat(dispatched.getPartyId()).isEqualTo(partyId);
+        assertThat(dispatched.getConsentId()).isEqualTo(consentId);
+        assertThat(dispatched.getApplicationId()).isEqualTo(applicationId);
+        assertThat(dispatched.getGranted()).isTrue();
+        assertThat(idemKeyCaptor.getValue()).isNotBlank();
+    }
+
+    @Test
+    void updateConsent_acceptedStatus_mapsToGrantedTrue() {
+        UUID partyId = UUID.randomUUID();
+        UUID consentId = UUID.randomUUID();
+
+        UpdateConsentCommand command = UpdateConsentCommand.builder()
+                .status("ACCEPTED")
+                .build();
+
+        when(customersApi.updateCustomerConsent(eq(partyId), eq(consentId),
+                any(com.firefly.domain.people.sdk.model.UpdateConsentCommand.class), any()))
+                .thenReturn(Mono.just(new Object()));
+
+        StepVerifier.create(service.updateConsent(partyId, consentId, command))
+                .verifyComplete();
+
+        ArgumentCaptor<com.firefly.domain.people.sdk.model.UpdateConsentCommand> dtoCaptor =
+                ArgumentCaptor.forClass(com.firefly.domain.people.sdk.model.UpdateConsentCommand.class);
+        verify(customersApi).updateCustomerConsent(eq(partyId), eq(consentId), dtoCaptor.capture(), any());
+        assertThat(dtoCaptor.getValue().getGranted()).isTrue();
+    }
+
+    @Test
+    void updateConsent_revokedStatus_mapsToGrantedFalse() {
+        UUID partyId = UUID.randomUUID();
+        UUID consentId = UUID.randomUUID();
+
+        UpdateConsentCommand command = UpdateConsentCommand.builder()
+                .status("REVOKED")
+                // applicationId intentionally null — pre-existing callers
+                .build();
+
+        when(customersApi.updateCustomerConsent(eq(partyId), eq(consentId),
+                any(com.firefly.domain.people.sdk.model.UpdateConsentCommand.class), any()))
+                .thenReturn(Mono.just(new Object()));
+
+        StepVerifier.create(service.updateConsent(partyId, consentId, command))
+                .verifyComplete();
+
+        ArgumentCaptor<com.firefly.domain.people.sdk.model.UpdateConsentCommand> dtoCaptor =
+                ArgumentCaptor.forClass(com.firefly.domain.people.sdk.model.UpdateConsentCommand.class);
+        verify(customersApi).updateCustomerConsent(eq(partyId), eq(consentId), dtoCaptor.capture(), any());
+        com.firefly.domain.people.sdk.model.UpdateConsentCommand dispatched = dtoCaptor.getValue();
+        assertThat(dispatched.getApplicationId()).isNull();
+        assertThat(dispatched.getGranted()).isFalse();
+    }
+
+    @Test
+    void updateConsent_rejectedStatus_mapsToGrantedFalse() {
+        UUID partyId = UUID.randomUUID();
+        UUID consentId = UUID.randomUUID();
+
+        UpdateConsentCommand command = UpdateConsentCommand.builder()
+                .status("REJECTED")
+                .build();
+
+        when(customersApi.updateCustomerConsent(eq(partyId), eq(consentId),
+                any(com.firefly.domain.people.sdk.model.UpdateConsentCommand.class), any()))
+                .thenReturn(Mono.just(new Object()));
+
+        StepVerifier.create(service.updateConsent(partyId, consentId, command))
+                .verifyComplete();
+
+        ArgumentCaptor<com.firefly.domain.people.sdk.model.UpdateConsentCommand> dtoCaptor =
+                ArgumentCaptor.forClass(com.firefly.domain.people.sdk.model.UpdateConsentCommand.class);
+        verify(customersApi).updateCustomerConsent(eq(partyId), eq(consentId), dtoCaptor.capture(), any());
+        assertThat(dtoCaptor.getValue().getGranted()).isFalse();
+    }
+
+    @Test
+    void updateConsent_unknownStatus_raisesBusinessExceptionAndDoesNotCallSdk() {
+        UUID partyId = UUID.randomUUID();
+        UUID consentId = UUID.randomUUID();
+
+        UpdateConsentCommand command = UpdateConsentCommand.builder()
+                .status("BOGUS")
+                .build();
+
+        StepVerifier.create(service.updateConsent(partyId, consentId, command))
+                .expectErrorSatisfies(error -> {
+                    assertThat(error).isInstanceOf(BusinessException.class);
+                    BusinessException be = (BusinessException) error;
+                    assertThat(be.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(be.getCode()).isEqualTo("INVALID_CONSENT_STATUS");
+                    assertThat(be.getMessage())
+                            .contains("BOGUS")
+                            .contains("GRANTED")
+                            .contains("ACCEPTED")
+                            .contains("REVOKED")
+                            .contains("REJECTED");
+                })
+                .verify();
+
+        verify(customersApi, org.mockito.Mockito.never())
+                .updateCustomerConsent(any(), any(),
+                        any(com.firefly.domain.people.sdk.model.UpdateConsentCommand.class), any());
+    }
+
+    @Test
+    void updateConsent_caseInsensitiveStatusIsAccepted() {
+        UUID partyId = UUID.randomUUID();
+        UUID consentId = UUID.randomUUID();
+
+        UpdateConsentCommand command = UpdateConsentCommand.builder()
+                .status("granted")
+                .build();
+
+        when(customersApi.updateCustomerConsent(eq(partyId), eq(consentId),
+                any(com.firefly.domain.people.sdk.model.UpdateConsentCommand.class), any()))
+                .thenReturn(Mono.just(new Object()));
+
+        StepVerifier.create(service.updateConsent(partyId, consentId, command))
+                .verifyComplete();
+
+        ArgumentCaptor<com.firefly.domain.people.sdk.model.UpdateConsentCommand> dtoCaptor =
+                ArgumentCaptor.forClass(com.firefly.domain.people.sdk.model.UpdateConsentCommand.class);
+        verify(customersApi).updateCustomerConsent(eq(partyId), eq(consentId), dtoCaptor.capture(), any());
+        assertThat(dtoCaptor.getValue().getGranted()).isTrue();
     }
 }

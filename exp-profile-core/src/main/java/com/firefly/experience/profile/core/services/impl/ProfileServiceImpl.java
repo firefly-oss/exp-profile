@@ -1,12 +1,12 @@
 package com.firefly.experience.profile.core.services.impl;
 
+import com.firefly.domain.common.contracts.sdk.api.ContractsApi;
 import com.firefly.domain.people.sdk.api.CustomersApi;
 import com.firefly.domain.people.sdk.model.RegisterAddressCommand;
 import com.firefly.domain.people.sdk.model.RegisterEmailCommand;
 import com.firefly.domain.people.sdk.model.RegisterIdentityDocumentCommand;
 import com.firefly.domain.people.sdk.model.RegisterPhoneCommand;
 import com.firefly.domain.people.sdk.model.UpdateCustomerCommand;
-import com.firefly.domain.common.contracts.sdk.api.ContractsApi;
 import com.firefly.experience.profile.core.commands.AddAddressCommand;
 import com.firefly.experience.profile.core.commands.AddIdentityDocumentCommand;
 import com.firefly.experience.profile.core.commands.UpdateAddressCommand;
@@ -21,8 +21,11 @@ import com.firefly.experience.profile.core.queries.DocumentDTO;
 import com.firefly.experience.profile.core.queries.IdentityDocumentDTO;
 import com.firefly.experience.profile.core.queries.ProfileDTO;
 import com.firefly.experience.profile.core.services.ProfileService;
+import com.firefly.experience.profile.core.util.IdempotencyKeys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.fireflyframework.web.error.exceptions.BusinessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -46,6 +49,7 @@ import java.util.UUID;
  *       {@code addCustomerPhone()}</li>
  *   <li>Manage identity documents via {@code CustomersApi.addTaxId()},
  *       {@code removeTaxId()}</li>
+ *   <li>Upsert consent records via {@code CustomersApi.updateCustomerConsent()}</li>
  * </ul>
  * Capabilities backed by {@code domain-common-contracts-sdk}:
  * <ul>
@@ -236,10 +240,81 @@ public class ProfileServiceImpl implements ProfileService {
 
     @Override
     public Mono<Void> updateConsent(UUID partyId, UUID consentId, UpdateConsentCommand command) {
-        log.debug("Updating consentId={} for partyId={}", consentId, partyId);
-        // TODO: Implement once domain-customer-people-sdk exposes
-        //       an update endpoint for consent status by consentId.
-        return Mono.empty();
+        return Mono.defer(() -> {
+            log.info("Updating consentId={} for partyId={} applicationId={}",
+                    consentId, partyId, command.getApplicationId());
+
+            boolean granted = mapStatusToGranted(command.getStatus());
+
+            // Build the domain-level UpdateConsentCommand (PUT /api/v1/customers/{partyId}/consents/{consentId})
+            // so the optional applicationId soft link is propagated to the customer-people
+            // domain. The domain service is the only owner of the persisted core consent
+            // record — the experience tier never speaks to core directly.
+            com.firefly.domain.people.sdk.model.UpdateConsentCommand sdkPayload =
+                    new com.firefly.domain.people.sdk.model.UpdateConsentCommand();
+            sdkPayload.setPartyId(partyId);
+            sdkPayload.setConsentId(consentId);
+            sdkPayload.setGranted(granted);
+            if (command.getApplicationId() != null) {
+                sdkPayload.setApplicationId(command.getApplicationId());
+            }
+
+            // PUT semantics: the same (partyId, consentId) pair represents the
+            // same consent record, so deriving the key deterministically from
+            // those two ids guarantees that retries of the same upsert collapse
+            // to the same downstream idempotency entry rather than producing
+            // duplicate consent rows.
+            String idempotencyKey = IdempotencyKeys.of(
+                    "exp-profile", "update-consent",
+                    partyId.toString(), consentId.toString());
+
+            return dispatchConsentUpsert(partyId, consentId, sdkPayload, idempotencyKey);
+        });
+    }
+
+    /**
+     * Dispatches the upsert of a consent record to the customer-people domain via
+     * {@link CustomersApi#updateCustomerConsent(UUID, UUID, com.firefly.domain.people.sdk.model.UpdateConsentCommand, String)}.
+     * <p>
+     * Extracted as a separate method to allow tests to capture the prepared
+     * {@link com.firefly.domain.people.sdk.model.UpdateConsentCommand} via
+     * {@code ArgumentCaptor} without replaying the full reactive SDK chain.
+     *
+     * @param partyId         the owning party UUID
+     * @param consentId       the consent record UUID being upserted
+     * @param sdkPayload      the prepared SDK payload (already populated with applicationId)
+     * @param idempotencyKey  unique key for idempotent retries
+     * @return reactive completion signal
+     */
+    public Mono<Void> dispatchConsentUpsert(UUID partyId,
+                                            UUID consentId,
+                                            com.firefly.domain.people.sdk.model.UpdateConsentCommand sdkPayload,
+                                            String idempotencyKey) {
+        return customersApi.updateCustomerConsent(partyId, consentId, sdkPayload, idempotencyKey).then();
+    }
+
+    /**
+     * Maps the inbound consent status string to the boolean {@code granted} flag
+     * expected by the downstream SDK payload.
+     *
+     * @param status the inbound status — must be one of GRANTED, ACCEPTED, REVOKED, REJECTED
+     *               (case-insensitive)
+     * @return {@code true} for GRANTED/ACCEPTED, {@code false} for REVOKED/REJECTED
+     * @throws BusinessException when {@code status} is not one of the accepted values
+     */
+    private boolean mapStatusToGranted(String status) {
+        if (status == null) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "INVALID_CONSENT_STATUS",
+                    "status is required. Allowed values: GRANTED, ACCEPTED, REVOKED, REJECTED.");
+        }
+        String normalized = status.trim().toUpperCase();
+        return switch (normalized) {
+            case "GRANTED", "ACCEPTED" -> true;
+            case "REVOKED", "REJECTED" -> false;
+            default -> throw new BusinessException(HttpStatus.BAD_REQUEST, "INVALID_CONSENT_STATUS",
+                    "status '" + status + "' is not supported. "
+                            + "Allowed values: GRANTED, ACCEPTED, REVOKED, REJECTED.");
+        };
     }
 
     // ── Identity Documents ─────────────────────────────────────────────────────
