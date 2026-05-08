@@ -437,7 +437,11 @@ components:
       properties:
         status:
           minLength: 1
+          pattern: ^(GRANTED|ACCEPTED|REVOKED|REJECTED)$
           type: string
+        applicationId:
+          type: string
+          format: uuid
     UpdateAddressCommand:
       type: object
       properties:

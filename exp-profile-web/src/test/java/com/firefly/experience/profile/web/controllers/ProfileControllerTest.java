@@ -13,6 +13,7 @@ import com.firefly.experience.profile.core.services.ProfileService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
@@ -26,6 +27,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -209,6 +211,30 @@ class ProfileControllerTest {
                 .bodyValue(command)
                 .exchange()
                 .expectStatus().isOk();
+    }
+
+    @Test
+    void updateConsent_propagatesApplicationIdToService() {
+        UUID consentId = UUID.randomUUID();
+        UUID applicationId = UUID.randomUUID();
+
+        when(profileService.updateConsent(any(), any(), any())).thenReturn(Mono.empty());
+
+        UpdateConsentCommand command = new UpdateConsentCommand();
+        command.setStatus("ACCEPTED");
+        command.setApplicationId(applicationId);
+
+        webTestClient.put()
+                .uri(BASE_PATH + "/consents/" + consentId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(command)
+                .exchange()
+                .expectStatus().isOk();
+
+        ArgumentCaptor<UpdateConsentCommand> captor = ArgumentCaptor.forClass(UpdateConsentCommand.class);
+        verify(profileService).updateConsent(any(), eq(consentId), captor.capture());
+        assertThat(captor.getValue().getApplicationId()).isEqualTo(applicationId);
+        assertThat(captor.getValue().getStatus()).isEqualTo("ACCEPTED");
     }
 
     @Test
