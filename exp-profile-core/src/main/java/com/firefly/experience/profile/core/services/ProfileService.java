@@ -96,6 +96,18 @@ public interface ProfileService {
     Flux<ConsentDTO> getConsents(UUID partyId);
 
     /**
+     * Returns the active consent catalogue, optionally filtered by product.
+     * <p>
+     * Catalogue entries are templates the channel can render as opt-in
+     * checkboxes. When {@code applicableProduct} is provided, the response
+     * still includes global (product-less) entries so the channel does not
+     * need a second call for terms-of-service / privacy.
+     *
+     * @param applicableProduct optional product filter, e.g. {@code PERSONAL_LOAN}
+     */
+    Flux<ConsentCatalogEntryDTO> getConsentCatalog(String applicableProduct);
+
+    /**
      * Updates the status (ACCEPTED / REVOKED) of a specific consent.
      */
     Mono<Void> updateConsent(UUID partyId, UUID consentId, UpdateConsentCommand command);

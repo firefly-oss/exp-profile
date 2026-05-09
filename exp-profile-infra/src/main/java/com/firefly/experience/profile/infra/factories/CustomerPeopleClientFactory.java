@@ -1,5 +1,6 @@
 package com.firefly.experience.profile.infra.factories;
 
+import com.firefly.domain.people.sdk.api.ConsentCatalogApi;
 import com.firefly.domain.people.sdk.api.CustomersApi;
 import com.firefly.domain.people.sdk.invoker.ApiClient;
 import com.firefly.experience.profile.infra.properties.CustomerPeopleProperties;
@@ -13,6 +14,8 @@ import org.springframework.stereotype.Component;
  * {@code CustomersApi} consolidates all customer profile operations exposed by the domain
  * service, including personal data, contact data (email/phone), addresses, identity
  * documents, and consents — they are all grouped under the "customers" OpenAPI tag.
+ * The {@code ConsentCatalogApi} sits next to it and exposes the platform-wide consent
+ * catalogue used to render opt-in checkboxes during onboarding journeys.
  * <p>
  * Base path is configured via
  * {@code api-configuration.domain-platform.customer-people.base-path} in
@@ -39,5 +42,16 @@ public class CustomerPeopleClientFactory {
     @Bean
     public CustomersApi customersApi() {
         return new CustomersApi(buildApiClient());
+    }
+
+    /**
+     * Provides the {@link ConsentCatalogApi} bean used to fetch the active consent
+     * catalogue (templates the user can be asked to accept).
+     *
+     * @return configured {@link ConsentCatalogApi} instance
+     */
+    @Bean
+    public ConsentCatalogApi consentCatalogApi() {
+        return new ConsentCatalogApi(buildApiClient());
     }
 }

@@ -1,7 +1,9 @@
 package com.firefly.experience.profile.core.services.impl;
 
 import com.firefly.domain.common.contracts.sdk.api.ContractsApi;
+import com.firefly.domain.people.sdk.api.ConsentCatalogApi;
 import com.firefly.domain.people.sdk.api.CustomersApi;
+import com.firefly.domain.people.sdk.model.ConsentCatalogResponse;
 import com.firefly.domain.people.sdk.model.RegisterAddressCommand;
 import com.firefly.domain.people.sdk.model.RegisterEmailCommand;
 import com.firefly.domain.people.sdk.model.RegisterIdentityDocumentCommand;
@@ -15,6 +17,7 @@ import com.firefly.experience.profile.core.commands.UpdateContactDataCommand;
 import com.firefly.experience.profile.core.commands.UpdatePersonalDataCommand;
 import com.firefly.experience.profile.core.commands.UploadDocumentCommand;
 import com.firefly.experience.profile.core.queries.AddressDTO;
+import com.firefly.experience.profile.core.queries.ConsentCatalogEntryDTO;
 import com.firefly.experience.profile.core.queries.ConsentDTO;
 import com.firefly.experience.profile.core.queries.ContractSummaryDTO;
 import com.firefly.experience.profile.core.queries.DocumentDTO;
@@ -66,6 +69,7 @@ import java.util.UUID;
 public class ProfileServiceImpl implements ProfileService {
 
     private final CustomersApi customersApi;
+    private final ConsentCatalogApi consentCatalogApi;
     private final ContractsApi contractsApi;
 
     // ── Profile ────────────────────────────────────────────────────────────────
@@ -236,6 +240,25 @@ public class ProfileServiceImpl implements ProfileService {
         // TODO: Implement once domain-customer-people-sdk exposes
         //       a query endpoint for listing consents by partyId.
         return Flux.empty();
+    }
+
+    @Override
+    public Flux<ConsentCatalogEntryDTO> getConsentCatalog(String applicableProduct) {
+        log.debug("Fetching consent catalog for applicableProduct={}", applicableProduct);
+        return consentCatalogApi.getConsentCatalog(applicableProduct, UUID.randomUUID().toString())
+                .map(ProfileServiceImpl::toCatalogEntry);
+    }
+
+    private static ConsentCatalogEntryDTO toCatalogEntry(ConsentCatalogResponse dto) {
+        return ConsentCatalogEntryDTO.builder()
+                .consentId(dto.getConsentId())
+                .type(dto.getConsentType())
+                .description(dto.getDescription())
+                .version(dto.getVersion())
+                .required(Boolean.TRUE.equals(dto.getRequired()))
+                .order(dto.getOrder())
+                .applicableProduct(dto.getApplicableProduct())
+                .build();
     }
 
     @Override
