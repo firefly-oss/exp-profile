@@ -8,7 +8,6 @@ import com.firefly.experience.profile.core.commands.UpdateContactDataCommand;
 import com.firefly.experience.profile.core.commands.UpdatePersonalDataCommand;
 import com.firefly.experience.profile.core.commands.UploadDocumentCommand;
 import com.firefly.experience.profile.core.queries.AddressDTO;
-import com.firefly.experience.profile.core.queries.ConsentCatalogEntryDTO;
 import com.firefly.experience.profile.core.queries.ConsentDTO;
 import com.firefly.experience.profile.core.queries.ContractSummaryDTO;
 import com.firefly.experience.profile.core.queries.DocumentDTO;
@@ -280,31 +279,16 @@ public class ProfileController {
     @GetMapping(value = "/consents", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
             summary = "List consents",
-            description = "Returns all consents registered for the authenticated party."
+            description = "Returns the consents the channel must render for the authenticated "
+                    + "party, optionally filtered by product. Each entry merges the catalogue "
+                    + "metadata (required, label, order) with the user's recorded choice; entries "
+                    + "the user has not chosen yet default to status REJECTED."
     )
-    public Flux<ConsentDTO> getConsents() {
+    public Flux<ConsentDTO> getConsents(
+            @RequestParam(value = "productCode", required = false) String productCode) {
         // TODO: Extract partyId from JWT token
         UUID partyId = UUID.randomUUID();
-        return profileService.getConsents(partyId);
-    }
-
-    /**
-     * Returns the active consent catalogue, optionally filtered by product.
-     *
-     * @param applicableProduct optional product code (e.g. {@code PERSONAL_LOAN}, {@code LEASING});
-     *                          when provided, global consents are still included
-     * @return reactive stream of {@link ConsentCatalogEntryDTO} entries
-     */
-    @GetMapping(value = "/consents/catalog", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(
-            summary = "Get consent catalog",
-            description = "Returns the active consent catalogue ready to be rendered as opt-in "
-                    + "checkboxes. Use the optional applicableProduct query param to scope the "
-                    + "result to a specific journey; global consents are always included."
-    )
-    public Flux<ConsentCatalogEntryDTO> getConsentCatalog(
-            @RequestParam(value = "applicableProduct", required = false) String applicableProduct) {
-        return profileService.getConsentCatalog(applicableProduct);
+        return profileService.getConsents(partyId, productCode);
     }
 
     /**

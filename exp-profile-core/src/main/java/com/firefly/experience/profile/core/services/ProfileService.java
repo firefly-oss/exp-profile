@@ -91,21 +91,20 @@ public interface ProfileService {
     // ── Consents ───────────────────────────────────────────────────────────────
 
     /**
-     * Returns all consents registered for the given party.
-     */
-    Flux<ConsentDTO> getConsents(UUID partyId);
-
-    /**
-     * Returns the active consent catalogue, optionally filtered by product.
+     * Returns the consents the channel must render for the given party,
+     * optionally filtered by product.
      * <p>
-     * Catalogue entries are templates the channel can render as opt-in
-     * checkboxes. When {@code applicableProduct} is provided, the response
-     * still includes global (product-less) entries so the channel does not
-     * need a second call for terms-of-service / privacy.
+     * Each entry merges the catalogue metadata ({@code required}, {@code label},
+     * {@code order}) with the user's recorded choice ({@code status},
+     * {@code updatedAt}). When the user has not recorded a choice yet,
+     * {@code status} defaults to {@code REJECTED}.
      *
-     * @param applicableProduct optional product filter, e.g. {@code PERSONAL_LOAN}
+     * @param partyId     owning party
+     * @param productCode optional product filter, e.g. {@code PERSONAL_LOAN} or
+     *                    {@code LEASING}; when {@code null} every active consent
+     *                    is returned
      */
-    Flux<ConsentCatalogEntryDTO> getConsentCatalog(String applicableProduct);
+    Flux<ConsentDTO> getConsents(UUID partyId, String productCode);
 
     /**
      * Updates the status (ACCEPTED / REVOKED) of a specific consent.
