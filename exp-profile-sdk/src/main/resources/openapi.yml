@@ -362,9 +362,17 @@ paths:
       tags:
       - Profile
       summary: List consents
-      description: Returns all consents registered for the authenticated party.
+      description: "Returns the consents the channel must render for the authenticated\
+        \ party, optionally filtered by product. Each entry merges the catalogue metadata\
+        \ (required, label, order) with the user's recorded choice; entries the user\
+        \ has not chosen yet default to status REJECTED."
       operationId: getConsents
       parameters:
+      - name: productCode
+        in: query
+        required: false
+        schema:
+          type: string
       - name: X-Idempotency-Key
         in: header
         description: "Unique key for idempotent requests. If provided, ensures that\
@@ -599,6 +607,13 @@ components:
         updatedAt:
           type: string
           format: date-time
+        required:
+          type: boolean
+        label:
+          type: string
+        order:
+          type: integer
+          format: int32
     ProfileDTO:
       type: object
       properties:

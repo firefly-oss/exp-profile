@@ -1,7 +1,9 @@
 package com.firefly.experience.profile.core.services.impl;
 
 import com.firefly.domain.common.contracts.sdk.api.ContractsApi;
+import com.firefly.domain.people.sdk.api.ConsentCatalogApi;
 import com.firefly.domain.people.sdk.api.CustomersApi;
+import com.firefly.domain.people.sdk.model.ConsentCatalogResponse;
 import com.firefly.domain.people.sdk.model.RegisterAddressCommand;
 import com.firefly.domain.people.sdk.model.RegisterEmailCommand;
 import com.firefly.domain.people.sdk.model.RegisterIdentityDocumentCommand;
@@ -66,6 +68,7 @@ import java.util.UUID;
 public class ProfileServiceImpl implements ProfileService {
 
     private final CustomersApi customersApi;
+    private final ConsentCatalogApi consentCatalogApi;
     private final ContractsApi contractsApi;
 
     // ── Profile ────────────────────────────────────────────────────────────────
@@ -231,11 +234,31 @@ public class ProfileServiceImpl implements ProfileService {
     // ── Consents ───────────────────────────────────────────────────────────────
 
     @Override
-    public Flux<ConsentDTO> getConsents(UUID partyId) {
-        log.debug("Fetching consents for partyId={}", partyId);
-        // TODO: Implement once domain-customer-people-sdk exposes
-        //       a query endpoint for listing consents by partyId.
-        return Flux.empty();
+    public Flux<ConsentDTO> getConsents(UUID partyId, String productCode) {
+        log.debug("Fetching consents for partyId={} productCode={}", partyId, productCode);
+        // The catalogue endpoint returns every active consent template the
+        // channel may need to render. Per-party state (status, updatedAt) is
+        // not yet queryable from the domain SDK, so we surface every entry as
+        // REJECTED — that's the expected default until the user records a
+        // choice via PUT /consents/{id}.
+        return consentCatalogApi.getConsentCatalog(productCode, UUID.randomUUID().toString())
+                .map(ProfileServiceImpl::toConsentDTO);
+    }
+
+    private static ConsentDTO toConsentDTO(ConsentCatalogResponse dto) {
+        return ConsentDTO.builder()
+                .consentId(dto.getConsentId())
+                .type(dto.getConsentType())
+                // PENDING distinguishes "user hasn't decided yet" from REJECTED
+                // (active opt-out). Once per-party state is queryable from the
+                // domain SDK this will be replaced with ACCEPTED/REJECTED based
+                // on the recorded choice.
+                .status("PENDING")
+                .updatedAt(null)
+                .required(Boolean.TRUE.equals(dto.getRequired()))
+                .label(dto.getDescription())
+                .order(dto.getOrder())
+                .build();
     }
 
     @Override

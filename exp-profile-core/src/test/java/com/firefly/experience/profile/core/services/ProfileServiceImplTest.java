@@ -1,6 +1,7 @@
 package com.firefly.experience.profile.core.services;
 
 import com.firefly.domain.common.contracts.sdk.api.ContractsApi;
+import com.firefly.domain.people.sdk.api.ConsentCatalogApi;
 import com.firefly.domain.people.sdk.api.CustomersApi;
 import com.firefly.domain.people.sdk.model.NaturalPersonDTO;
 import com.firefly.experience.profile.core.commands.AddAddressCommand;
@@ -40,13 +41,16 @@ class ProfileServiceImplTest {
     private CustomersApi customersApi;
 
     @Mock
+    private ConsentCatalogApi consentCatalogApi;
+
+    @Mock
     private ContractsApi contractsApi;
 
     private ProfileService service;
 
     @BeforeEach
     void setUp() {
-        service = new ProfileServiceImpl(customersApi, contractsApi);
+        service = new ProfileServiceImpl(customersApi, consentCatalogApi, contractsApi);
     }
 
     // ── getProfile ─────────────────────────────────────────────────────────────

@@ -7,10 +7,14 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Consent record for a party, e.g. marketing consent, data processing consent.
+ * Consent record for a party, joined with the catalogue metadata the channel
+ * needs to render an opt-in checkbox.
  * <p>
- * {@code status} is either {@code ACCEPTED} or {@code REVOKED}, mapped from
- * the downstream {@code granted} boolean.
+ * Catalogue side ({@code required}, {@code label}, {@code order}) always comes
+ * from the active consent catalogue; per-party side ({@code status},
+ * {@code updatedAt}) reflects the user's last choice. When the user has not
+ * recorded a choice yet, {@code status} is {@code PENDING} and
+ * {@code updatedAt} is {@code null}.
  */
 @Value
 @Builder
@@ -18,7 +22,13 @@ public class ConsentDTO {
 
     UUID consentId;
     String type;
-    /** ACCEPTED or REVOKED */
+    /** ACCEPTED, REJECTED or PENDING — PENDING is the default until the user records a choice. */
     String status;
     LocalDateTime updatedAt;
+    /** Whether the user MUST tick this consent before continuing. */
+    boolean required;
+    /** Human-readable label, may contain HTML for inline links to legal copy. */
+    String label;
+    /** Rendering order, ascending. */
+    Integer order;
 }

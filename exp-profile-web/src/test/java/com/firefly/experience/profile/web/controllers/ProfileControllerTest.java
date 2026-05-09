@@ -189,13 +189,28 @@ class ProfileControllerTest {
 
     @Test
     void getConsents_returns200() {
-        when(profileService.getConsents(any())).thenReturn(Flux.empty());
+        when(profileService.getConsents(any(), any())).thenReturn(Flux.empty());
 
         webTestClient.get()
                 .uri(BASE_PATH + "/consents")
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus().isOk();
+    }
+
+    @Test
+    void getConsents_propagatesProductCodeFilter() {
+        when(profileService.getConsents(any(), any())).thenReturn(Flux.empty());
+
+        webTestClient.get()
+                .uri(BASE_PATH + "/consents?productCode=LEASING")
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isOk();
+
+        org.mockito.ArgumentCaptor<String> captor = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(profileService).getConsents(any(), captor.capture());
+        assertThat(captor.getValue()).isEqualTo("LEASING");
     }
 
     @Test

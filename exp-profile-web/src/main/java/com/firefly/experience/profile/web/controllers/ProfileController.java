@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
@@ -278,12 +279,16 @@ public class ProfileController {
     @GetMapping(value = "/consents", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
             summary = "List consents",
-            description = "Returns all consents registered for the authenticated party."
+            description = "Returns the consents the channel must render for the authenticated "
+                    + "party, optionally filtered by product. Each entry merges the catalogue "
+                    + "metadata (required, label, order) with the user's recorded choice; entries "
+                    + "the user has not chosen yet default to status REJECTED."
     )
-    public Flux<ConsentDTO> getConsents() {
+    public Flux<ConsentDTO> getConsents(
+            @RequestParam(value = "productCode", required = false) String productCode) {
         // TODO: Extract partyId from JWT token
         UUID partyId = UUID.randomUUID();
-        return profileService.getConsents(partyId);
+        return profileService.getConsents(partyId, productCode);
     }
 
     /**
