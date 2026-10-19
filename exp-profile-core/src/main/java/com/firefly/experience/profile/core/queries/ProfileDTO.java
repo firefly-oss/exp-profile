@@ -1,7 +1,9 @@
 package com.firefly.experience.profile.core.queries;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -14,8 +16,10 @@ import java.util.UUID;
  * Built by {@link com.firefly.experience.profile.core.services.ProfileService#getProfile(UUID)}
  * using parallel downstream calls via {@code Mono.zip()}.
  */
-@Value
+@Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ProfileDTO {
 
     UUID partyId;

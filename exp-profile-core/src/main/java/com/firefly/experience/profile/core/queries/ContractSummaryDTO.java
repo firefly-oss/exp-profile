@@ -1,7 +1,9 @@
 package com.firefly.experience.profile.core.queries;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -12,8 +14,10 @@ import java.util.UUID;
  * Full contract details (terms, documents) are available via
  * {@code domain-common-contracts} or {@code core-common-contract-mgmt} directly.
  */
-@Value
+@Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ContractSummaryDTO {
 
     UUID contractId;

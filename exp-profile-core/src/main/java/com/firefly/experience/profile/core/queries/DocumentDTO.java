@@ -1,7 +1,9 @@
 package com.firefly.experience.profile.core.queries;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -12,8 +14,10 @@ import java.util.UUID;
  * Document content is not embedded here; retrieve it separately
  * via {@link com.firefly.experience.profile.core.services.ProfileService#downloadDocument(UUID, UUID)}.
  */
-@Value
+@Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class DocumentDTO {
 
     UUID documentId;

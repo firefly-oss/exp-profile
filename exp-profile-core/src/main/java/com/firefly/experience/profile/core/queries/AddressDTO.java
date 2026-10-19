@@ -1,7 +1,9 @@
 package com.firefly.experience.profile.core.queries;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
@@ -12,8 +14,10 @@ import java.util.UUID;
  * (e.g. HOME, WORK, BILLING) and is surfaced as a plain String
  * to keep the experience-layer contract independent of domain enums.
  */
-@Value
+@Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AddressDTO {
 
     UUID addressId;

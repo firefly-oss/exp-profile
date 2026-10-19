@@ -1,7 +1,9 @@
 package com.firefly.experience.profile.core.queries;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -16,8 +18,10 @@ import java.util.UUID;
  * recorded a choice yet, {@code status} is {@code PENDING} and
  * {@code updatedAt} is {@code null}.
  */
-@Value
+@Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ConsentDTO {
 
     UUID consentId;
