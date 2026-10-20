@@ -12,6 +12,7 @@
     </parent>
 
     <artifactId>exp-profile</artifactId>
+    <name>exp-profile</name>
     <version>26.10.3</version>
     <packaging>pom</packaging>
     <modules>

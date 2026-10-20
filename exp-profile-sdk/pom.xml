@@ -10,6 +10,7 @@
     </parent>
 
     <artifactId>exp-profile-sdk</artifactId>
+    <name>exp-profile-sdk</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

@@ -10,6 +10,7 @@
     </parent>
 
     <artifactId>exp-profile-interfaces</artifactId>
+    <name>exp-profile-interfaces</name>
 
     <properties>
         <maven.compiler.source>25</maven.compiler.source>

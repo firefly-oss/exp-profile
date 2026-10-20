@@ -10,6 +10,7 @@
     </parent>
 
     <artifactId>exp-profile-core</artifactId>
+    <name>exp-profile-core</name>
 
     <properties>
         <maven.compiler.source>25</maven.compiler.source>
