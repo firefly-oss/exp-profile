@@ -7,13 +7,13 @@
     <parent>
         <groupId>io.fireflysoftware</groupId>
         <artifactId>firefly-parent</artifactId>
-        <version>26.10.4</version>
+        <version>26.10.5</version>
         <relativePath/>
     </parent>
 
     <artifactId>exp-profile</artifactId>
     <name>exp-profile</name>
-    <version>26.10.4</version>
+    <version>26.10.5</version>
     <packaging>pom</packaging>
     <modules>
         <module>exp-profile-core</module>
