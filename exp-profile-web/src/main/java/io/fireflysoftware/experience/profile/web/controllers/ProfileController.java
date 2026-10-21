@@ -60,14 +60,12 @@ import java.util.UUID;
  * Each endpoint is atomic and stateless — it aggregates or mutates domain data
  * on demand without relying on any persistent journey state.
  * <p>
- * Base path: {@code /api/v1/experience/profile}
+ * Base path: {@code /api/v1/experience/profile/{partyId}}
  * <p>
- * Authentication: All endpoints require a valid JWT. The party ID is extracted
- * from the token by the gateway. For this MVP the partyId is provided as a
- * placeholder; production implementations should resolve it from the security context.
+ * The party id is a path variable. IdentityPort resolves the actor before AccessPort.
  */
 @RestController
-@RequestMapping("/api/v1/experience/profile")
+@RequestMapping("/api/v1/experience/profile/{partyId}")
 @RequiredArgsConstructor
 @Tag(name = "Profile", description = "User profile self-service")
 public class ProfileController {
@@ -88,9 +86,7 @@ public class ProfileController {
             description = "Returns the aggregated profile for the authenticated party, "
                     + "including personal data, addresses, and identity documents."
     )
-    public Mono<ResponseEntity<ProfileDTO>> getProfile() {
-        // TODO: Extract partyId from JWT token (e.g. via SecurityContextHolder or @CurrentUser)
-        UUID partyId = UUID.randomUUID();
+    public Mono<ResponseEntity<ProfileDTO>> getProfile(@PathVariable UUID partyId) {
         return profileService.getProfile(partyId)
                 .map(ResponseEntity::ok);
     }
@@ -113,9 +109,8 @@ public class ProfileController {
                     + "of the authenticated party. Only provided fields are applied."
     )
     public Mono<ResponseEntity<Void>> updatePersonalData(
+            @PathVariable UUID partyId,
             @Valid @RequestBody UpdatePersonalDataCommand command) {
-        // TODO: Extract partyId from JWT token
-        UUID partyId = UUID.randomUUID();
         return profileService.updatePersonalData(partyId, command)
                 .thenReturn(ResponseEntity.<Void>noContent().build());
     }
@@ -136,9 +131,8 @@ public class ProfileController {
                     + "of the authenticated party. Only provided fields are applied."
     )
     public Mono<ResponseEntity<Void>> updateContactData(
+            @PathVariable UUID partyId,
             @Valid @RequestBody UpdateContactDataCommand command) {
-        // TODO: Extract partyId from JWT token
-        UUID partyId = UUID.randomUUID();
         return profileService.updateContactData(partyId, command)
                 .thenReturn(ResponseEntity.<Void>noContent().build());
     }
@@ -155,9 +149,7 @@ public class ProfileController {
             summary = "List addresses",
             description = "Returns all addresses associated with the authenticated party."
     )
-    public Flux<AddressDTO> getAddresses() {
-        // TODO: Extract partyId from JWT token
-        UUID partyId = UUID.randomUUID();
+    public Flux<AddressDTO> getAddresses(@PathVariable UUID partyId) {
         return profileService.getAddresses(partyId);
     }
 
@@ -176,9 +168,8 @@ public class ProfileController {
             description = "Adds a new address to the authenticated party's profile."
     )
     public Mono<ResponseEntity<AddressDTO>> addAddress(
+            @PathVariable UUID partyId,
             @Valid @RequestBody AddAddressCommand command) {
-        // TODO: Extract partyId from JWT token
-        UUID partyId = UUID.randomUUID();
         return profileService.addAddress(partyId, command)
                 .map(dto -> ResponseEntity.status(HttpStatus.CREATED).body(dto));
     }
@@ -200,10 +191,9 @@ public class ProfileController {
                     + "Only provided fields are applied."
     )
     public Mono<ResponseEntity<AddressDTO>> updateAddress(
+            @PathVariable UUID partyId,
             @PathVariable UUID id,
             @Valid @RequestBody UpdateAddressCommand command) {
-        // TODO: Extract partyId from JWT token
-        UUID partyId = UUID.randomUUID();
         return profileService.updateAddress(partyId, id, command)
                 .map(ResponseEntity::ok);
     }
@@ -219,9 +209,7 @@ public class ProfileController {
             summary = "Delete address",
             description = "Removes an address from the authenticated party's profile."
     )
-    public Mono<ResponseEntity<Void>> deleteAddress(@PathVariable UUID id) {
-        // TODO: Extract partyId from JWT token
-        UUID partyId = UUID.randomUUID();
+    public Mono<ResponseEntity<Void>> deleteAddress(@PathVariable UUID partyId, @PathVariable UUID id) {
         return profileService.deleteAddress(partyId, id)
                 .thenReturn(ResponseEntity.<Void>noContent().build());
     }
@@ -238,9 +226,7 @@ public class ProfileController {
             summary = "List documents",
             description = "Returns metadata for all documents uploaded by the authenticated party."
     )
-    public Flux<DocumentDTO> getDocuments() {
-        // TODO: Extract partyId from JWT token
-        UUID partyId = UUID.randomUUID();
+    public Flux<DocumentDTO> getDocuments(@PathVariable UUID partyId) {
         return profileService.getDocuments(partyId);
     }
 
@@ -259,9 +245,8 @@ public class ProfileController {
             description = "Uploads a document and returns its metadata."
     )
     public Mono<ResponseEntity<DocumentDTO>> uploadDocument(
+            @PathVariable UUID partyId,
             @Valid @RequestBody UploadDocumentCommand command) {
-        // TODO: Extract partyId from JWT token
-        UUID partyId = UUID.randomUUID();
         return profileService.uploadDocument(partyId, command)
                 .map(dto -> ResponseEntity.status(HttpStatus.CREATED).body(dto));
     }
@@ -277,9 +262,7 @@ public class ProfileController {
             summary = "Download document",
             description = "Downloads the raw content of the specified document."
     )
-    public Mono<ResponseEntity<byte[]>> downloadDocument(@PathVariable UUID id) {
-        // TODO: Extract partyId from JWT token
-        UUID partyId = UUID.randomUUID();
+    public Mono<ResponseEntity<byte[]>> downloadDocument(@PathVariable UUID partyId, @PathVariable UUID id) {
         return profileService.downloadDocument(partyId, id)
                 .map(bytes -> ResponseEntity.ok()
                         .contentType(MediaType.APPLICATION_OCTET_STREAM)
@@ -302,9 +285,8 @@ public class ProfileController {
                     + "the user has not chosen yet default to status REJECTED."
     )
     public Flux<ConsentDTO> getConsents(
+            @PathVariable UUID partyId,
             @RequestParam(value = "productCode", required = false) String productCode) {
-        // TODO: Extract partyId from JWT token
-        UUID partyId = UUID.randomUUID();
         return profileService.getConsents(partyId, productCode);
     }
 
@@ -323,10 +305,9 @@ public class ProfileController {
             description = "Updates the status (ACCEPTED / REVOKED) of a specific consent."
     )
     public Mono<ResponseEntity<Void>> updateConsent(
+            @PathVariable UUID partyId,
             @PathVariable UUID id,
             @Valid @RequestBody UpdateConsentCommand command) {
-        // TODO: Extract partyId from JWT token
-        UUID partyId = UUID.randomUUID();
         return profileService.updateConsent(partyId, id, command)
                 .thenReturn(ResponseEntity.<Void>ok().build());
     }
@@ -343,9 +324,7 @@ public class ProfileController {
             summary = "List identity documents",
             description = "Returns all identity documents associated with the authenticated party."
     )
-    public Flux<IdentityDocumentDTO> getIdentityDocuments() {
-        // TODO: Extract partyId from JWT token
-        UUID partyId = UUID.randomUUID();
+    public Flux<IdentityDocumentDTO> getIdentityDocuments(@PathVariable UUID partyId) {
         return profileService.getIdentityDocuments(partyId);
     }
 
@@ -366,9 +345,8 @@ public class ProfileController {
                     + "for the authenticated party."
     )
     public Mono<ResponseEntity<IdentityDocumentDTO>> addIdentityDocument(
+            @PathVariable UUID partyId,
             @Valid @RequestBody AddIdentityDocumentCommand command) {
-        // TODO: Extract partyId from JWT token
-        UUID partyId = UUID.randomUUID();
         return profileService.addIdentityDocument(partyId, command)
                 .map(dto -> ResponseEntity.status(HttpStatus.CREATED).body(dto));
     }
@@ -384,9 +362,7 @@ public class ProfileController {
             summary = "Delete identity document",
             description = "Removes an identity document from the authenticated party's profile."
     )
-    public Mono<ResponseEntity<Void>> deleteIdentityDocument(@PathVariable UUID id) {
-        // TODO: Extract partyId from JWT token
-        UUID partyId = UUID.randomUUID();
+    public Mono<ResponseEntity<Void>> deleteIdentityDocument(@PathVariable UUID partyId, @PathVariable UUID id) {
         return profileService.deleteIdentityDocument(partyId, id)
                 .thenReturn(ResponseEntity.<Void>noContent().build());
     }
@@ -403,9 +379,7 @@ public class ProfileController {
             summary = "List contracts",
             description = "Returns active contract summaries associated with the authenticated party."
     )
-    public Flux<ContractSummaryDTO> getContracts() {
-        // TODO: Extract partyId from JWT token
-        UUID partyId = UUID.randomUUID();
+    public Flux<ContractSummaryDTO> getContracts(@PathVariable UUID partyId) {
         return profileService.getContracts(partyId);
     }
 }

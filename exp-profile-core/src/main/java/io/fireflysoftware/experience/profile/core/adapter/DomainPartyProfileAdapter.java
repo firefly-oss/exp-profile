@@ -25,6 +25,7 @@ import io.fireflysoftware.domain.people.sdk.model.RegisterAddressCommand;
 import io.fireflysoftware.domain.people.sdk.model.RegisterEmailCommand;
 import io.fireflysoftware.domain.people.sdk.model.RegisterIdentityDocumentCommand;
 import io.fireflysoftware.domain.people.sdk.model.RegisterPhoneCommand;
+import io.fireflysoftware.domain.people.sdk.model.UpdateCustomerCommand;
 import io.fireflysoftware.domain.people.sdk.api.PartyContactQueriesApi;
 import io.fireflysoftware.domain.people.sdk.model.PaginationResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -105,7 +106,7 @@ public class DomainPartyProfileAdapter implements PartyProfilePort {
                 ).map(lists -> ProfileDTO.builder()
                         .partyId(partyId)
                         .firstName(person.getGivenName())
-                        .lastName(person.getFamilyName1())
+                        .lastName(person.getFamilyName())
                         .dateOfBirth(person.getDateOfBirth())
                         .addresses(lists.getT1())
                         .identityDocuments(lists.getT2())
@@ -124,7 +125,7 @@ public class DomainPartyProfileAdapter implements PartyProfilePort {
             sdkCommand.setGivenName(command.getFirstName());
         }
         if (command.getLastName() != null) {
-            sdkCommand.setFamilyName1(command.getLastName());
+            sdkCommand.setFamilyName(command.getLastName());
         }
         if (command.getDateOfBirth() != null) {
             sdkCommand.setDateOfBirth(command.getDateOfBirth());

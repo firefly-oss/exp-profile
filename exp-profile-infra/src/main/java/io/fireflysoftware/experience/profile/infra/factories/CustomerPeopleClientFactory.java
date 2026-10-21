@@ -19,6 +19,7 @@ package io.fireflysoftware.experience.profile.infra.factories;
 
 import io.fireflysoftware.domain.people.sdk.api.ConsentCatalogApi;
 import io.fireflysoftware.domain.people.sdk.api.CustomersApi;
+import io.fireflysoftware.domain.people.sdk.api.PartyContactQueriesApi;
 import io.fireflysoftware.domain.people.sdk.invoker.ApiClient;
 import io.fireflysoftware.experience.profile.infra.properties.CustomerPeopleProperties;
 import lombok.RequiredArgsConstructor;
@@ -67,6 +68,11 @@ public class CustomerPeopleClientFactory {
      *
      * @return configured {@link ConsentCatalogApi} instance
      */
+    @Bean
+    public PartyContactQueriesApi partyContactQueriesApi() {
+        return new PartyContactQueriesApi(buildApiClient());
+    }
+
     @Bean
     public ConsentCatalogApi consentCatalogApi() {
         return new ConsentCatalogApi(buildApiClient());

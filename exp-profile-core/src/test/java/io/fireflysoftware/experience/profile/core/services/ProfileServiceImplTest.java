@@ -20,7 +20,10 @@ package io.fireflysoftware.experience.profile.core.services;
 import io.fireflysoftware.domain.common.contracts.sdk.api.ContractsApi;
 import io.fireflysoftware.domain.people.sdk.api.ConsentCatalogApi;
 import io.fireflysoftware.domain.people.sdk.api.CustomersApi;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.fireflysoftware.domain.people.sdk.api.PartyContactQueriesApi;
 import io.fireflysoftware.domain.people.sdk.model.NaturalPersonDTO;
+import io.fireflysoftware.domain.people.sdk.model.PaginationResponse;
 import io.fireflysoftware.experience.profile.core.commands.AddAddressCommand;
 import io.fireflysoftware.experience.profile.core.commands.AddIdentityDocumentCommand;
 import io.fireflysoftware.experience.profile.core.commands.UpdateAddressCommand;
@@ -30,7 +33,8 @@ import io.fireflysoftware.experience.profile.core.commands.UpdatePersonalDataCom
 import io.fireflysoftware.experience.profile.core.queries.AddressDTO;
 import io.fireflysoftware.experience.profile.core.queries.IdentityDocumentDTO;
 import io.fireflysoftware.experience.profile.core.queries.ProfileDTO;
-import io.fireflysoftware.experience.profile.core.services.impl.ProfileServiceImpl;
+import io.fireflysoftware.experience.profile.core.adapter.DomainPartyProfileAdapter;
+import io.fireflysoftware.experience.profile.core.ports.PartyProfilePort;
 import org.fireflyframework.web.error.exceptions.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,6 +52,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -62,12 +67,21 @@ class ProfileServiceImplTest {
 
     @Mock
     private ContractsApi contractsApi;
+    @Mock
+    private PartyContactQueriesApi partyContactQueriesApi;
 
-    private ProfileService service;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private PartyProfilePort service;
 
     @BeforeEach
     void setUp() {
-        service = new ProfileServiceImpl(customersApi, consentCatalogApi, contractsApi);
+        service = new DomainPartyProfileAdapter(
+                customersApi, consentCatalogApi, contractsApi, partyContactQueriesApi, objectMapper);
+        lenient().when(partyContactQueriesApi.getPartyAddresses(any(), any()))
+                .thenReturn(Mono.just(new PaginationResponse()));
+        lenient().when(partyContactQueriesApi.getPartyIdentityDocuments(any(), any()))
+                .thenReturn(Mono.just(new PaginationResponse()));
     }
 
     // ── getProfile ─────────────────────────────────────────────────────────────
@@ -77,7 +91,7 @@ class ProfileServiceImplTest {
         UUID partyId = UUID.randomUUID();
         NaturalPersonDTO sdkDto = new NaturalPersonDTO();
         sdkDto.setGivenName("Jane");
-        sdkDto.setFamilyName1("Doe");
+        sdkDto.setFamilyName("Doe");
         sdkDto.setDateOfBirth(LocalDate.of(1990, 5, 15));
 
         when(customersApi.getCustomerInfo(eq(partyId), any())).thenReturn(Mono.just(sdkDto));
@@ -249,7 +263,8 @@ class ProfileServiceImplTest {
         command.setNumber("XYZ123456");
         command.setExpiryDate(LocalDate.of(2030, 12, 31));
 
-        when(customersApi.addTaxId(eq(partyId), any(), any())).thenReturn(Mono.just(new Object()));
+        when(customersApi.addTaxId(eq(partyId), any(), any()))
+                .thenReturn(Mono.just(java.util.Map.of("identityDocumentId", UUID.randomUUID().toString())));
 
         StepVerifier.create(service.addIdentityDocument(partyId, command))
                 .expectNextMatches(dto ->
@@ -280,11 +295,14 @@ class ProfileServiceImplTest {
     // ── getContracts (stub) ────────────────────────────────────────────────────
 
     @Test
-    void getContracts_returnsEmptyFluxPendingImplementation() {
+    void getContracts_readsDomainContracts() {
         UUID partyId = UUID.randomUUID();
+        when(contractsApi.listByParty(eq(partyId), any())).thenReturn(Mono.just(java.util.Map.of()));
 
         StepVerifier.create(service.getContracts(partyId))
                 .verifyComplete();
+
+        verify(contractsApi).listByParty(eq(partyId), any());
     }
 
     // ── updateConsent ──────────────────────────────────────────────────────────

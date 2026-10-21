@@ -61,7 +61,8 @@ class ProfileControllerTest {
 
     private WebTestClient webTestClient;
 
-    private static final String BASE_PATH = "/api/v1/experience/profile";
+    private static final UUID PARTY_ID = UUID.fromString("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+    private static final String BASE_PATH = "/api/v1/experience/profile/" + PARTY_ID;
 
     @BeforeEach
     void setUp() {
