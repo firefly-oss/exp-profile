@@ -19,6 +19,9 @@ package io.fireflysoftware.experience.profile.core.adapter;
 
 import io.fireflysoftware.experience.profile.core.ports.ContractHoldingsPort;
 import io.fireflysoftware.experience.profile.core.queries.ContractSummaryDTO;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -60,41 +63,70 @@ public class HttpContractHoldingsAdapter implements ContractHoldingsPort {
 
     @Override
     public Flux<ContractSummaryDTO> list(UUID partyId) {
+        ObjectMapper mapper = new ObjectMapper();
         return contracts.get().uri("/api/v1/contracts/by-party/{partyId}", partyId)
                 .retrieve()
+                .bodyToMono(String.class)
+                .flatMapMany(body -> rows(mapper, body))
+                .concatMap(raw -> contractRow(raw).flatMap(summary -> nameProduct(summary)));
+    }
+
+    private Flux<Map<String, Object>> rows(ObjectMapper mapper, String body) {
+        try {
+            JsonNode node = mapper.readTree(body);
+            if (node == null || node.isNull()) {
+                return Flux.empty();
+            }
+            JsonNode content = node.isArray() ? node : node.get("content");
+            if (content == null || !content.isArray()) {
+                return Flux.empty();
+            }
+            List<Map<String, Object>> rows = mapper.convertValue(content, new TypeReference<>() {
+            });
+            return Flux.fromIterable(rows);
+        } catch (Exception ex) {
+            return Flux.error(ex);
+        }
+    }
+
+    private Mono<ContractSummaryDTO> contractRow(Map<String, Object> raw) {
+        UUID contractId = uuid(raw.get("contractId"));
+        UUID productId = uuid(raw.get("productId"));
+        ContractSummaryDTO summary = ContractSummaryDTO.builder()
+                .contractId(contractId)
+                .type(text(raw.get("contractNumber")))
+                .status(text(raw.get("contractStatus")))
+                .productId(productId)
+                .build();
+        if (productId != null || contractId == null) {
+            return Mono.just(summary);
+        }
+        return contracts.get().uri("/api/v1/contracts/{contractId}", contractId)
+                .retrieve()
                 .bodyToMono(MAP)
-                .flatMapMany(body -> {
-                    Object content = body.get("content");
-                    if (!(content instanceof List<?> rows)) {
-                        return Flux.empty();
-                    }
-                    return Flux.fromIterable(rows);
+                .map(contract -> {
+                    summary.setProductId(uuid(contract.get("productId")));
+                    summary.setType(text(contract.get("contractNumber")));
+                    summary.setStatus(text(contract.get("contractStatus")));
+                    return summary;
                 })
-                .concatMap(row -> {
-                    if (!(row instanceof Map<?, ?> raw)) {
-                        return Mono.empty();
-                    }
-                    UUID contractId = uuid(raw.get("contractId"));
-                    UUID productId = uuid(raw.get("productId"));
-                    ContractSummaryDTO summary = ContractSummaryDTO.builder()
-                            .contractId(contractId)
-                            .type(text(raw.get("contractNumber")))
-                            .status(text(raw.get("contractStatus")))
-                            .productId(productId)
-                            .build();
-                    if (productId == null) {
-                        return Mono.just(summary);
-                    }
-                    return products.get().uri("/api/v1/products/{productId}", productId)
-                            .retrieve()
-                            .bodyToMono(MAP)
-                            .map(product -> {
-                                summary.setProductName(text(product.get("productName")));
-                                summary.setProductCode(text(product.get("productCode")));
-                                return summary;
-                            })
-                            .defaultIfEmpty(summary);
-                });
+                .defaultIfEmpty(summary);
+    }
+
+    private Mono<ContractSummaryDTO> nameProduct(ContractSummaryDTO summary) {
+        if (summary.getProductId() == null) {
+            return Mono.just(summary);
+        }
+        return products.get().uri("/api/v1/products/{productId}", summary.getProductId())
+                .retrieve()
+                .bodyToMono(MAP)
+                .map(product -> {
+                    summary.setProductName(text(product.get("productName")));
+                    summary.setProductCode(text(product.get("productCode")));
+                    return summary;
+                })
+                .onErrorResume(ex -> Mono.just(summary))
+                .defaultIfEmpty(summary);
     }
 
     private static UUID uuid(Object value) {
