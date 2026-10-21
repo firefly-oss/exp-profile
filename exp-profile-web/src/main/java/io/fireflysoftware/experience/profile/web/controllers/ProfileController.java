@@ -377,7 +377,7 @@ public class ProfileController {
     @GetMapping(value = "/contracts", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
             summary = "List contracts",
-            description = "Returns active contract summaries associated with the authenticated party."
+            description = "Returns the customer's contracts and the product on each contract."
     )
     public Flux<ContractSummaryDTO> getContracts(@PathVariable UUID partyId) {
         return profileService.getContracts(partyId);

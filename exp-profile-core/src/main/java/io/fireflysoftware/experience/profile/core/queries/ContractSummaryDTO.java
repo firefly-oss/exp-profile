@@ -43,4 +43,7 @@ public class ContractSummaryDTO {
     /** Current contract status (e.g. ACTIVE, CLOSED). */
     String status;
     LocalDateTime signedAt;
+    UUID productId;
+    String productName;
+    String productCode;
 }

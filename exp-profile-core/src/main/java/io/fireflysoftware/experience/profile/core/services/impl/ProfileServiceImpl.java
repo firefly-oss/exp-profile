@@ -29,6 +29,7 @@ import io.fireflysoftware.experience.profile.core.ports.AccessGuard;
 import io.fireflysoftware.experience.profile.core.ports.IdentityPort;
 import io.fireflysoftware.experience.profile.core.ports.AccessPort;
 import io.fireflysoftware.experience.profile.core.ports.AccessRequest;
+import io.fireflysoftware.experience.profile.core.ports.ContractHoldingsPort;
 import io.fireflysoftware.experience.profile.core.ports.PartyProfilePort;
 import io.fireflysoftware.experience.profile.core.queries.AddressDTO;
 import io.fireflysoftware.experience.profile.core.queries.ConsentDTO;
@@ -55,6 +56,7 @@ public class ProfileServiceImpl implements ProfileService {
     private final IdentityPort identityPort;
     private final AccessPort accessPort;
     private final PartyProfilePort partyProfile;
+    private final ContractHoldingsPort holdings;
 
     @Override
     public Mono<ProfileDTO> getProfile(UUID partyId) {
@@ -133,7 +135,7 @@ public class ProfileServiceImpl implements ProfileService {
 
     @Override
     public Flux<ContractSummaryDTO> getContracts(UUID partyId) {
-        return guardMany(partyId, AccessAction.READ, () -> partyProfile.getContracts(partyId));
+        return guardMany(partyId, AccessAction.READ, () -> holdings.list(partyId));
     }
 
     private <T> Mono<T> guard(UUID partyId, AccessAction action, java.util.function.Supplier<Mono<T>> call) {
