@@ -192,11 +192,13 @@ class ProfileServiceImplTest {
         command.setPostalCode("28013");
         command.setCountry("ES");
 
-        when(customersApi.addCustomerAddress(eq(partyId), any(), any())).thenReturn(Mono.just(new Object()));
+        UUID addressId = UUID.randomUUID();
+        when(customersApi.addCustomerAddress(eq(partyId), any(), any()))
+                .thenReturn(Mono.just(java.util.Map.of("addressId", addressId.toString())));
 
         StepVerifier.create(service.addAddress(partyId, command))
                 .expectNextMatches(dto ->
-                        dto.getAddressId() != null
+                        addressId.equals(dto.getAddressId())
                         && "HOME".equals(dto.getType())
                         && "Calle Gran Via 1".equals(dto.getStreet())
                         && "Madrid".equals(dto.getCity())

@@ -191,14 +191,20 @@ public class DomainPartyProfileAdapter implements PartyProfilePort {
         sdkCommand.setAddressKind(toAddressKind(command.getType()));
 
         return customersApi.addCustomerAddress(partyId, sdkCommand, UUID.randomUUID().toString())
-                .thenReturn(AddressDTO.builder()
-                        .addressId(UUID.randomUUID())
-                        .type(command.getType())
-                        .street(command.getStreet())
-                        .city(command.getCity())
-                        .postalCode(command.getPostalCode())
-                        .country(command.getCountry())
-                        .build());
+                .map(body -> {
+                    UUID addressId = uuid(objectMapper.convertValue(body, java.util.Map.class).get("addressId"));
+                    if (addressId == null) {
+                        throw new IllegalStateException("Address id was not returned");
+                    }
+                    return AddressDTO.builder()
+                            .addressId(addressId)
+                            .type(command.getType())
+                            .street(command.getStreet())
+                            .city(command.getCity())
+                            .postalCode(command.getPostalCode())
+                            .country(command.getCountry())
+                            .build();
+                });
     }
 
     @Override
